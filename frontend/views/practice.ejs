@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Trading Practice</title>
+    <!-- Milligram CSS CDN -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.min.css"
+    />
+    <script src="/plotly/plotly.min.js"></script>
+    <style>
+      :root {
+        --sidebar-w: 320px;
+      }
+      body {
+        background-color: #f9f9f9;
+        padding: 2rem;
+      }
+
+      /* ===== Layout ===== */
+      .layout {
+        display: flex;
+        gap: 1.5rem;
+        align-items: flex-start;
+      }
+      .sidebar {
+        flex: 0 0 var(--sidebar-w);
+        position: sticky;
+        top: 1.25rem;
+        max-height: calc(100vh - 2.5rem);
+        overflow: auto;
+      }
+      .main {
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+
+      /* ===== Cards & small UI bits ===== */
+      .card {
+        background: #fff;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        padding: 1rem;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        margin-bottom: 1rem;
+      }
+      .card h4 { margin: 0 0 .5rem 0; }
+      details > summary {
+        cursor: pointer;
+        font-weight: 600;
+        margin: 0.35rem 0;
+      }
+      .badge {
+        display: inline-block;
+        padding: 0.15rem 0.45rem;
+        border-radius: 0.35rem;
+        font-size: 0.8rem;
+        background: #eee;
+        border: 1px solid #ddd;
+        margin-left: 0.35rem;
+      }
+      .italic { font-style: italic; color: #777; }
+      kbd {
+        padding: 0.1rem 0.3rem;
+        border: 1px solid #ccc;
+        border-bottom-width: 2px;
+        border-radius: 3px;
+        background: #f7f7f7;
+      }
+
+      /* ===== Chart & controls ===== */
+      #chart {
+        height: 420px;
+        background: white;
+        border-radius: 5px;
+        margin-bottom: 1rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      .flex-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .6rem;
+        margin-bottom: 1rem;
+      }
+      .btn + .btn { margin-left: 0; }
+
+      .btn-hold { background-color: #e0e0e0; color: #000; }
+      .btn-buy  { background-color: #28a745; color: #fff; }
+      .btn-sell { background-color: #dc3545; color: #fff; }
+      .btn-blue { background-color: #007bff; color: #fff; }
+      .btn-gray { background-color: #ddd; color: #000; }
+
+      #buyAmountDiv { margin-bottom: 1rem; display: none; }
+
+      #feedback {
+        padding: 1rem;
+        background: #fff;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 0.95rem;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      }
+
+      /* ===== Responsive ===== */
+      @media (max-width: 980px) {
+        :root { --sidebar-w: 280px; }
+      }
+      @media (max-width: 820px) {
+        body { padding: 1rem; }
+        .layout { flex-direction: column; }
+        .sidebar {
+          position: static;
+          max-height: none;
+          order: 2;
+        }
+        .main { order: 1; }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="section">
+        <a href="/profile">← Back to Profile</a>
+      </div>
+
+      <div class="section">
+        <h2>Trading Practice</h2>
+        <p><strong>Session ID:</strong> <%= sessionId %></p>
+      </div>
+
+      <div class="section" id="status">
+        <p>
+          <strong>Balance:</strong> $<span id="balance">0.00</span> &nbsp;&nbsp;
+          <strong>Shares Held:</strong> <span id="shares_held">0</span>
+        </p>
+        <p><strong>Hint:</strong> <span id="hint"></span></p>
+      </div>
+
+      <!-- ===== Two-column layout ===== -->
+      <div class="layout">
+        <!-- ===== Left: Sidebar (instructions + glossary) ===== -->
+        <aside class="sidebar">
+          <div class="card">
+            <h4>How this practice works</h4>
+            <ol style="margin-bottom:.75rem">
+              <li>Check the chart and the <strong>Hint</strong> above.</li>
+              <li>
+                Choose <strong>Hold</strong>, <strong>Buy</strong>, or <strong>Sell</strong>.
+                <span class="badge">Tip</span> Click <strong>Buy</strong> to enter an amount,
+                then <em>Confirm Buy</em>.
+              </li>
+              <li>
+                We compare your choice to the AI agent’s recommendation and show
+                <strong>✅ CORRECT</strong> (you matched the agent) or
+                <strong>❌ INCORRECT</strong> (you didn’t).
+              </li>
+              <li>We also show the model’s <strong>Predicted Next Price</strong> for context.</li>
+              <li>Repeat each step until the practice ends.</li>
+            </ol>
+            <p class="italic" style="margin:0">
+              “Correct” means you matched the agent’s recommendation. It’s not a guarantee of profit.
+            </p>
+          </div>
+
+          <div class="card">
+            <h4>Trading terms (plain English)</h4>
+
+            <details open>
+              <summary>Actions & outcomes</summary>
+              <ul>
+                <li><strong>Hold</strong> — Do nothing this step.</li>
+                <li><strong>Buy</strong> — Spend cash to get shares. You choose the amount.</li>
+                <li><strong>Sell</strong> — Convert all held shares to cash at the current price.</li>
+                <li><strong>Balance</strong> — Your cash on hand.</li>
+                <li><strong>Shares Held</strong> — How many shares you own right now.</li>
+                <li><strong>Reward</strong> — Change in total value (cash + shares) after your action for this step.</li>
+              </ul>
+            </details>
+
+            <details>
+              <summary>Model guidance</summary>
+              <ul>
+                <li><strong>Agent recommended</strong> — What the AI thinks is best (Hold/Buy/Sell).</li>
+                <li><strong>Predicted Next Price</strong> — Estimate of the next close:
+                  higher than now → possible uptrend; lower → possible downtrend.
+                </li>
+                <li><strong>Correct / Incorrect</strong> — Whether your choice matched the agent’s recommendation.</li>
+              </ul>
+            </details>
+
+            <details>
+              <summary>Technical indicators</summary>
+              <ul>
+                <li><strong>RSI</strong> — Momentum gauge (0–100). <em>&lt;30 oversold</em>, <em>&gt;70 overbought</em>.</li>
+                <li><strong>SMA</strong> — Average price over N days. Above = potential uptrend; below = potential downtrend.</li>
+                <li><strong>MACD</strong> — Trend/momentum via moving-average crossovers; histogram shows strength.</li>
+              </ul>
+            </details>
+
+            <details>
+              <summary>Risk & strategy notes</summary>
+              <ul>
+                <li><strong>Stop-loss</strong> — Planned sell level to cap losses.</li>
+                <li><strong>Take-profit</strong> — Planned sell level to lock gains.</li>
+                <li><strong>Mean-reversion vs Trend-following</strong> — Buy dips vs ride strength. The agent follows the short-term forecast.</li>
+              </ul>
+            </details>
+          </div>
+        </aside>
+
+        <!-- ===== Right: Main content ===== -->
+        <main class="main">
+          <div id="chart"></div>
+
+          <div class="flex-row" id="controls">
+            <button id="holdBtn" class="button btn-hold">Hold</button>
+            <button id="buyBtn" class="button btn-buy">Buy</button>
+            <button id="sellBtn" class="button btn-sell">Sell</button>
+          </div>
+
+          <div id="buyAmountDiv" class="card">
+            <label>
+              Amount to Spend: $
+              <input type="number" id="buyAmountInput" min="0" step="0.01" />
+            </label>
+            <div class="flex-row" style="margin-top:.5rem">
+              <button id="confirmBuyBtn" class="button btn-blue">Confirm Buy</button>
+              <button id="cancelBuyBtn" class="button btn-gray">Cancel</button>
+            </div>
+          </div>
+
+          <div id="feedback" class="card"></div>
+        </main>
+      </div>
+      <!-- /layout -->
+    </div>
+
+    <script>
+      (function () {
+        const sessionId = "<%= sessionId %>";
+        const ticker = "<%= ticker %>";
+        const baseURL = "http://localhost:5001";
+        let done = false;
+
+        async function updateStateAndChart() {
+          if (done) return;
+          try {
+            const resp = await fetch(`${baseURL}/state_and_hint?session_id=${sessionId}`);
+            const data = await resp.json();
+            if (data.error) {
+              alert("Error: " + data.error);
+              return;
+            }
+            document.getElementById("balance").innerText = data.balance.toFixed(2);
+            document.getElementById("shares_held").innerText = data.shares_held;
+            document.getElementById("hint").innerText = data.hint;
+            drawChart(data.recent_bars);
+          } catch (err) {
+            console.error("updateStateAndChart() failed:", err);
+          }
+        }
+
+        function drawChart(bars) {
+          const dates = bars.map((b) => b.date);
+          const open = bars.map((b) => b.open);
+          const high = bars.map((b) => b.high);
+          const low = bars.map((b) => b.low);
+          const close = bars.map((b) => b.close);
+
+          const trace = {
+            x: dates, open, high, low, close,
+            type: "candlestick", xaxis: "x", yaxis: "y",
+          };
+          const layout = {
+            dragmode: "zoom",
+            margin: { r: 10, t: 25, b: 40, l: 60 },
+            showlegend: false,
+            xaxis: { rangeslider: { visible: false } },
+          };
+          Plotly.newPlot("chart", [trace], layout);
+        }
+
+        async function sendAction(action, amount = null) {
+          if (done) return;
+          const payload = { session_id: sessionId, action };
+          if (action === 1) payload.amount = amount;
+
+          try {
+            const resp = await fetch(`${baseURL}/take_action`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+            const data = await resp.json();
+            if (data.error) {
+              alert("Error: " + data.error);
+              return;
+            }
+
+            const correctness = data.correct ? "✅ CORRECT" : "❌ INCORRECT";
+            const recommendedText = ["Hold", "Buy", "Sell"][data.agent_recommendation];
+            const predictedStr = data.predicted_price.toFixed(2);
+
+            const fbDiv = document.getElementById("feedback");
+            fbDiv.innerHTML = `
+              <p><strong>${correctness}</strong>
+              &nbsp;&nbsp; Agent recommended: <em>${recommendedText}</em></p>
+              <p>Predicted Next Price: $${predictedStr}</p>
+              <hr style="margin: 0.5rem 0;">
+              <p>${data.llm_explanation.replace(/\n/g, "<br>")}</p>
+            `;
+
+            // optional: record trade to your Node/DB endpoint
+            await fetch("/record_trade", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                session_uuid: sessionId,
+                ticker: ticker,
+                action: action,
+                correct: data.correct ? 1 : 0,
+                reward: data.reward,
+              }),
+            });
+
+            if (data.done) {
+              done = true;
+              fbDiv.innerHTML += `<p class="italic">Practice complete.</p>`;
+            } else {
+              updateStateAndChart();
+            }
+          } catch (err) {
+            console.error("sendAction() failed:", err);
+          }
+        }
+
+        // Controls
+        document.getElementById("holdBtn").addEventListener("click", () => sendAction(0));
+        document.getElementById("sellBtn").addEventListener("click", () => sendAction(2));
+        document.getElementById("buyBtn").addEventListener("click", () => {
+          document.getElementById("buyAmountDiv").style.display = "block";
+        });
+        document.getElementById("confirmBuyBtn").addEventListener("click", () => {
+          const amtField = document.getElementById("buyAmountInput");
+          const amt = parseFloat(amtField.value);
+          if (isNaN(amt) || amt <= 0) {
+            alert("Enter a valid amount to buy.");
+            return;
+          }
+          document.getElementById("buyAmountDiv").style.display = "none";
+          amtField.value = "";
+          sendAction(1, amt);
+        });
+        document.getElementById("cancelBuyBtn").addEventListener("click", () => {
+          document.getElementById("buyAmountDiv").style.display = "none";
+          document.getElementById("buyAmountInput").value = "";
+        });
+
+        updateStateAndChart();
+      })();
+    </script>
+  </body>
+</html>

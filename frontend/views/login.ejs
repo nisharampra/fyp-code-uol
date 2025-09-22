@@ -1,0 +1,89 @@
+    <!-- Login -->
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Log In</title>
+    <!-- Milligram CDN -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.4.1/milligram.min.css"
+    />
+    <style>
+      body {
+        background-color: #f9f9f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        margin: 0;
+        color: #333;
+      }
+
+      .container {
+        background: #fff;
+        padding: 2rem;
+        border-radius: 6px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+        width: 100%;
+        max-width: 400px;
+      }
+
+      .error {
+        color: #d33;
+        margin-bottom: 1rem;
+        font-size: 0.95rem;
+        text-align: center;
+      }
+
+      h3 {
+        margin-bottom: 1.5rem;
+        text-align: center;
+      }
+
+      form {
+        margin-bottom: 1rem;
+      }
+
+      p {
+        text-align: center;
+        font-size: 0.9rem;
+      }
+
+      a {
+        color: #1e90ff;
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h3>Log In</h3>
+
+      <% if (error) { %>
+        <div class="error"><%= error %></div>
+      <% } %>
+           <!-- Login  -->
+      <form action="/login" method="POST">
+        <label for="username">Username:</label>
+        <input type="text" name="username" id="username" required />
+             <!-- password -->
+        <label for="password">Password:</label>
+        <input type="password" name="password" id="password" required />
+             <!-- submit -->
+        <button type="submit" class="button-primary">Log In</button>
+      </form>
+
+      <p>
+        Don't have an account?
+            <!-- Register route -->
+        <a href="/register">Register here</a>
+      </p>
+    </div>
+  </body>
+</html>
