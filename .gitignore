@@ -1,0 +1,45 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.venv/
+venv/
+.env
+.env.*
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Node / Web
+node_modules/
+dist/
+build/
+.next/
+.out/
+
+# Logs & caches
+*.log
+*.pid
+*.seed
+.cache/
+coverage/
+pytest_cache/
+
+# Data / media (adjust as needed)
+data/
+*.csv
+*.parquet
+*.zip
+*.mp4
+*.mov
+*.mp3
+*.wav
+*.pt
+*.pth
+*.h5
+*.onnx
